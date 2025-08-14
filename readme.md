@@ -8,7 +8,7 @@ A simple, fast note-taking command-line app that uses **Neovim** for editing and
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/note_taker.git
+git clone https://github.com/clandestino161/note_taker.git
 cd note_taker
 ```
 
