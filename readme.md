@@ -1,97 +1,93 @@
 # Note Taker CLI
 
-A simple, fast note-taking command-line app that uses **Neovim** for editing and stores notes locally in `~/.local/share/note_taker`.
+A simple Neovim-based note-taking CLI application written in Python.
 
 ---
 
-## 📦 Installation
+## Installation
 
-### 1. Clone the Repository
+It is recommended to install **note-taker** using `pipx` so it can run globally without activating a virtual environment.
+
+### Requirements
+
+- Python 3.8+
+- Neovim installed
+- pipx installed (`python3 -m pip install --user pipx && python3 -m pipx ensurepath`)
+
+### Install note-taker
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/clandestino161/note_taker.git
 cd note_taker
 ```
 
-### 2. Install Locally
-
-Install using `pip` so the CLI command is available system-wide:
+2. Install using `pipx`:
 
 ```bash
-pip install --user .
-
+pipx install .
 ```
 
-After installation, you will see:
+Now `note-taker` is available globally:
 
-- A confirmation that the notes directory was created at:
 ```bash
-~/.local/share/note_taker
+note-taker add --title "My Note"
 ```
 
-- A check to confirm whether `~/.local/bin` is in your `PATH`.
-    - **If missing**, you’ll see instructions like:
-    ```bash
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
-    ```
+## Commands
 
-⚠️ **Important:** The `--user` flag installs scripts into `~/.local/bin`.
-Make sure that folder is in your `PATH` to run `note-taker` from anywhere.
+All commands can be run from anywhere after installation.
 
-## 📄 Commands
+### Add a new note
 
-### Create a new note (opens in Neovim immediately)
+Creates a new note and immediately opens it in Neovim:
 
 ```bash
-note-taker add --title "My New Note"
+note-taker add --title "Title of the Note"
 ```
 
-### Open an existing note for editing
+### Read notes
+
+Lists all notes and opens the selected note in Neovim:
 
 ```bash
-note-taker read --title "My New Note"
+note-taker read
+```
+
+### Edit a note
+
+Open an existing note in Neovim:
+
+```bash
+note-taker edit --title "Title of the Note"
 ```
 
 ### Delete a note
 
+Delete an existing note:
+
 ```bash
-note-taker delete --title "My New Note"
+note-taker delete --title "Title of the Note"
 ```
 
 ### List all notes
+
+Shows all saved notes without opening them:
 
 ```bash
 note-taker list
 ```
 
-## 📂 Storage Location
+## Notes Directory
 
-All notes are stored as Markdown files in:
+All notes are stored in a standard location:
 
 ```bash
 ~/.local/share/note_taker
 ```
 
-Example:
+The directory is created automatically on first run.
 
-```bash
-~/.local/share/note_taker/My New Note.md
-```
+## License
 
-## 🛠 Requirements
-
-- Python 3.8+
-- Neovim installed and available as `nvim` in your `PATH`
-
-## 🧹 Uninstall
-
-To uninstall:
-
-```bash
-pip uninstall note_taker
-```
-
-Your notes in `~/.local/share/note_taker` will remain unless deleted manually.
-
-## 📜 License
-
-MIT License — do whatever you want, but attribution is appreciated.
+MIT License
