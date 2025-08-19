@@ -1,6 +1,8 @@
 import os
 import argparse
 import subprocess
+import zipfile
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 import markdown2
@@ -80,6 +82,23 @@ def export_note(title: str, to_pdf: bool, to_html: bool):
         console.print(f"[green]Exported to PDF:[/green] {pdf_file}")
 
 
+def backup_notes():
+    md_files = [f for f in os.listdir(NOTES_DIR) if f.endswith(".md")]
+    if not md_files:
+        console.print("[yellow]No notes to backup.[/yellow]")
+        return
+
+    downloads_dir = os.path.join(Path.home(), "Downloads")
+    os.makedirs(downloads_dir, exist_ok=True)
+    zip_path = os.path.join(downloads_dir, "note_taker_backup.zip")
+
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        for f in md_files:
+            zipf.write(os.path.join(NOTES_DIR, f), arcname=f)
+
+    console.print(f"[green]Backup created:[/green] {zip_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="note-taker", description="Simple Neovim-based Note Taker CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -100,6 +119,8 @@ def main():
     export_parser.add_argument("--pdf", action="store_true", help="Export as PDF")
     export_parser.add_argument("--html", action="store_true", help="Export as HTML")
 
+    subparsers.add_parser("backup", help="Backup all notes as a zip file in Downloads")
+
     args = parser.parse_args()
 
     if args.command == "add":
@@ -112,6 +133,8 @@ def main():
         list_notes()
     elif args.command == "export":
         export_note(args.title, args.pdf, args.html)
+    elif args.command == "backup":
+        backup_notes()
 
 
 if __name__ == "__main__":

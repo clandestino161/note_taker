@@ -79,6 +79,14 @@ Export as both PDF and HTML:
 note-taker export --title "First Note" --pdf --html
 ```
 
+### Backup all notes
+
+Creates a zip archive in the users download directory including all files from note-taker:
+
+```bash
+note-taker backup
+```
+
 ## Notes Directory
 
 All notes are stored in a standard location:
