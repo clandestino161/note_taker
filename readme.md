@@ -1,40 +1,29 @@
 # Note Taker CLI
 
-A simple Neovim-based note-taking CLI application written in Python.
+A simple Neovim-based note-taking CLI application written in Python with Markdown support, note management, and export to PDF/HTML.
 
----
+## Requirements
+
+* Python 3.8+
+* Neovim installed
+* pipx installed (`python3 -m pip install --user pipx && python3 -m pipx ensurepath`)
 
 ## Installation
 
-It is recommended to install **note-taker** using `pipx` so it can run globally without activating a virtual environment.
-
-### Requirements
-
-- Python 3.8+
-- Neovim installed
-- pipx installed (`python3 -m pip install --user pipx && python3 -m pipx ensurepath`)
-
-### Install note-taker
-
-1. Clone the repository:
-```bash
-git clone https://github.com/clandestino161/note_taker.git
-cd note_taker
-```
-
-2. Install using `pipx`:
+The recommended way is to use **pipx** so you can run `note-taker` globally:
 
 ```bash
-pipx install .
+pip install pipx
+pipx install https://github.com/clandestino161/note_taker.git
 ```
 
-Now `note-taker` is available globally:
+To update the app after changes:
 
 ```bash
-note-taker add --title "My Note"
+pipx upgrade note_taker
 ```
 
-## Commands
+## Usage
 
 All commands can be run from anywhere after installation.
 
@@ -44,14 +33,6 @@ Creates a new note and immediately opens it in Neovim:
 
 ```bash
 note-taker add --title "Title of the Note"
-```
-
-### Read notes
-
-Lists all notes and opens the selected note in Neovim:
-
-```bash
-note-taker read
 ```
 
 ### Edit a note
@@ -78,6 +59,26 @@ Shows all saved notes without opening them:
 note-taker list
 ```
 
+### Export notes
+
+Export as PDF:
+
+```bash
+note-taker export --title "First Note" --pdf
+```
+
+Export as HTML:
+
+```bash
+note-taker export --title "First Note" --html
+```
+
+Export as both PDF and HTML:
+
+```bash
+note-taker export --title "First Note" --pdf --html
+```
+
 ## Notes Directory
 
 All notes are stored in a standard location:
@@ -90,4 +91,4 @@ The directory is created automatically on first run.
 
 ## License
 
-MIT License
+MIT

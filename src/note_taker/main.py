@@ -1,100 +1,117 @@
-import argparse
 import os
+import argparse
 import subprocess
-import sys
 from rich.console import Console
 from rich.table import Table
+import markdown2
+from weasyprint import HTML
 
-# Global paths
-NOTES_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "note_taker")
 console = Console()
 
+NOTES_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "note_taker")
+os.makedirs(NOTES_DIR, exist_ok=True)
 
-def ensure_notes_dir():
-    os.makedirs(NOTES_DIR, exist_ok=True)
+
+def get_note_path(title: str) -> str:
+    safe_title = f"{title}.md".replace(" ", "_")
+    return os.path.join(NOTES_DIR, safe_title)
+
+
+def add_note(title: str):
+    note_path = get_note_path(title)
+    if os.path.exists(note_path):
+        console.print(f"[red]Error:[/red] Note '{title}' already exists.")
+        return
+    with open(note_path, "w") as f:
+        f.write(f"# {title}\n\n")
+    subprocess.run(["nvim", note_path])
+
+
+def edit_note(title: str):
+    note_path = get_note_path(title)
+    if not os.path.exists(note_path):
+        console.print(f"[red]Error:[/red] Note '{title}' not found.")
+        return
+    subprocess.run(["nvim", note_path])
+
+
+def delete_note(title: str):
+    note_path = get_note_path(title)
+    if not os.path.exists(note_path):
+        console.print(f"[red]Error:[/red] Note '{title}' not found.")
+        return
+    os.remove(note_path)
+    console.print(f"[green]Deleted:[/green] {title}")
 
 
 def list_notes():
-    ensure_notes_dir()
-    notes = [f[:-3] for f in os.listdir(NOTES_DIR) if f.endswith(".md")]
-    notes.sort()
-
-    if not notes:
+    files = sorted(f for f in os.listdir(NOTES_DIR) if f.endswith(".md"))
+    if not files:
         console.print("[yellow]No notes found.[/yellow]")
         return
 
-    table = Table(title="Your Notes", header_style="bold cyan")
-    table.add_column("Title", style="bold green")
-
-    for note in notes:
-        table.add_row(note)
-
+    table = Table(title="Your Notes")
+    table.add_column("Title", style="cyan")
+    for f in files:
+        table.add_row(f.replace("_", " ").removesuffix(".md"))
     console.print(table)
 
 
-def add_note(title):
-    ensure_notes_dir()
-    filepath = os.path.join(NOTES_DIR, f"{title}.md")
-    if os.path.exists(filepath):
-        console.print(f"[red]Note '{title}' already exists.[/red]")
+def export_note(title: str, to_pdf: bool, to_html: bool):
+    note_path = get_note_path(title)
+    if not os.path.exists(note_path):
+        console.print(f"[red]Error:[/red] Note '{title}' not found.")
         return
 
-    # Create empty note
-    with open(filepath, "w") as f:
-        f.write(f"# {title}\n\n")
+    with open(note_path, "r") as f:
+        content = f.read()
 
-    # Open in Neovim
-    subprocess.run(["nvim", filepath], check=False)
-    console.print(f"[green]Note '{title}' created and saved at {filepath}[/green]")
+    html_content = markdown2.markdown(content)
 
+    if to_html:
+        html_file = note_path.replace(".md", ".html")
+        with open(html_file, "w") as f:
+            f.write(html_content)
+        console.print(f"[green]Exported to HTML:[/green] {html_file}")
 
-def edit_note(title):
-    ensure_notes_dir()
-    filepath = os.path.join(NOTES_DIR, f"{title}.md")
-
-    if not os.path.exists(filepath):
-        console.print(f"[red]Note '{title}' not found.[/red]")
-        return
-
-    subprocess.run(["nvim", filepath], check=False)
-    console.print(f"[cyan]Note '{title}' edited.[/cyan]")
-
-
-def delete_note(title):
-    ensure_notes_dir()
-    filepath = os.path.join(NOTES_DIR, f"{title}.md")
-
-    if os.path.exists(filepath):
-        os.remove(filepath)
-        console.print(f"[green]Note '{title}' deleted.[/green]")
-    else:
-        console.print(f"[red]Note '{title}' not found.[/red]")
+    if to_pdf:
+        pdf_file = note_path.replace(".md", ".pdf")
+        HTML(string=html_content).write_pdf(pdf_file)
+        console.print(f"[green]Exported to PDF:[/green] {pdf_file}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Simple Neovim-based Note Taking App")
-    parser.add_argument("command", choices=["add", "read", "delete", "list"], help="Command to execute")
-    parser.add_argument("--title", help="Title of the note")
+    parser = argparse.ArgumentParser(prog="note-taker", description="Simple Neovim-based Note Taker CLI")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    add_parser = subparsers.add_parser("add", help="Add a new note")
+    add_parser.add_argument("--title", required=True, help="Title of the note")
+
+    edit_parser = subparsers.add_parser("edit", help="Edit an existing note")
+    edit_parser.add_argument("--title", required=True, help="Title of the note")
+
+    delete_parser = subparsers.add_parser("delete", help="Delete an existing note")
+    delete_parser.add_argument("--title", required=True, help="Title of the note")
+
+    subparsers.add_parser("list", help="List all notes")
+
+    export_parser = subparsers.add_parser("export", help="Export a note")
+    export_parser.add_argument("--title", required=True, help="Title of the note")
+    export_parser.add_argument("--pdf", action="store_true", help="Export as PDF")
+    export_parser.add_argument("--html", action="store_true", help="Export as HTML")
 
     args = parser.parse_args()
 
-    if args.command == "list":
-        list_notes()
-    elif args.command == "add":
-        if not args.title:
-            console.print("[red]Title is required for adding a note.[/red]")
-            sys.exit(1)
+    if args.command == "add":
         add_note(args.title)
-    elif args.command == "read":
-        if not args.title:
-            console.print("[red]Title is required for reading a note.[/red]")
-            sys.exit(1)
+    elif args.command == "edit":
         edit_note(args.title)
     elif args.command == "delete":
-        if not args.title:
-            console.print("[red]Title is required for deleting a note.[/red]")
-            sys.exit(1)
         delete_note(args.title)
+    elif args.command == "list":
+        list_notes()
+    elif args.command == "export":
+        export_note(args.title, args.pdf, args.html)
 
 
 if __name__ == "__main__":
