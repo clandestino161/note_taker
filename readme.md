@@ -14,7 +14,7 @@ The recommended way is to use **pipx** so you can run `note-taker` globally:
 
 ```bash
 pip install pipx
-pipx install https://github.com/clandestino161/note_taker.git
+pipx install git+https://github.com/clandestino161/note_taker.git
 ```
 
 To update the app after changes:
