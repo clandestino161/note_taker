@@ -1,16 +1,16 @@
 import os
 import argparse
 import subprocess
-import zipfile
-from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 import markdown2
 from weasyprint import HTML
+import zipfile
+import datetime
 
 console = Console()
 
-NOTES_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "note_taker")
+NOTES_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "notes")
 os.makedirs(NOTES_DIR, exist_ok=True)
 
 
@@ -25,6 +25,7 @@ def add_note(title: str):
         console.print(f"[red]Error:[/red] Note '{title}' already exists.")
         return
     with open(note_path, "w") as f:
+        f.write("<!-- status: open -->\n")
         f.write(f"# {title}\n\n")
     subprocess.run(["nvim", note_path])
 
@@ -46,6 +47,13 @@ def delete_note(title: str):
     console.print(f"[green]Deleted:[/green] {title}")
 
 
+def extract_status(content: str) -> str:
+    for line in content.splitlines():
+        if line.startswith("<!-- status:"):
+            return line.replace("<!-- status:", "").replace("-->", "").strip()
+    return "open"
+
+
 def list_notes():
     files = sorted(f for f in os.listdir(NOTES_DIR) if f.endswith(".md"))
     if not files:
@@ -54,9 +62,39 @@ def list_notes():
 
     table = Table(title="Your Notes")
     table.add_column("Title", style="cyan")
+    table.add_column("Status", style="magenta")
+    table.add_column("Last Modified", style="green")
+
     for f in files:
-        table.add_row(f.replace("_", " ").removesuffix(".md"))
+        path = os.path.join(NOTES_DIR, f)
+        with open(path, "r") as nf:
+            content = nf.read()
+        status = extract_status(content)
+        mtime = datetime.datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M")
+        title = f.replace("_", " ").removesuffix(".md")
+        table.add_row(title, status, mtime)
+
     console.print(table)
+
+
+def set_status(title: str, status: str):
+    note_path = get_note_path(title)
+    if not os.path.exists(note_path):
+        console.print(f"[red]Error:[/red] Note '{title}' not found.")
+        return
+
+    with open(note_path, "r") as f:
+        lines = f.readlines()
+
+    if lines and lines[0].startswith("<!-- status:"):
+        lines[0] = f"<!-- status: {status} -->\n"
+    else:
+        lines.insert(0, f"<!-- status: {status} -->\n")
+
+    with open(note_path, "w") as f:
+        f.writelines(lines)
+
+    console.print(f"[green]Updated status:[/green] {title} → {status}")
 
 
 def export_note(title: str, to_pdf: bool, to_html: bool):
@@ -83,24 +121,23 @@ def export_note(title: str, to_pdf: bool, to_html: bool):
 
 
 def backup_notes():
-    md_files = [f for f in os.listdir(NOTES_DIR) if f.endswith(".md")]
-    if not md_files:
-        console.print("[yellow]No notes to backup.[/yellow]")
-        return
-
-    downloads_dir = os.path.join(Path.home(), "Downloads")
+    downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
     os.makedirs(downloads_dir, exist_ok=True)
-    zip_path = os.path.join(downloads_dir, "note_taker_backup.zip")
+    backup_file = os.path.join(
+        downloads_dir,
+        f"notes_backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    )
 
-    with zipfile.ZipFile(zip_path, "w") as zipf:
-        for f in md_files:
-            zipf.write(os.path.join(NOTES_DIR, f), arcname=f)
+    with zipfile.ZipFile(backup_file, "w") as zipf:
+        for f in os.listdir(NOTES_DIR):
+            if f.endswith(".md"):
+                zipf.write(os.path.join(NOTES_DIR, f), arcname=f)
 
-    console.print(f"[green]Backup created:[/green] {zip_path}")
+    console.print(f"[green]Backup created:[/green] {backup_file}")
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="note-taker", description="Simple Neovim-based Note Taker CLI")
+    parser = argparse.ArgumentParser(prog="notes", description="Simple Neovim-based Notes CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     add_parser = subparsers.add_parser("add", help="Add a new note")
@@ -114,12 +151,16 @@ def main():
 
     subparsers.add_parser("list", help="List all notes")
 
+    status_parser = subparsers.add_parser("status", help="Change the status of a note")
+    status_parser.add_argument("--title", required=True, help="Title of the note")
+    status_parser.add_argument("--set", required=True, choices=["open", "in progress", "done"], help="New status")
+
     export_parser = subparsers.add_parser("export", help="Export a note")
     export_parser.add_argument("--title", required=True, help="Title of the note")
     export_parser.add_argument("--pdf", action="store_true", help="Export as PDF")
     export_parser.add_argument("--html", action="store_true", help="Export as HTML")
 
-    subparsers.add_parser("backup", help="Backup all notes as a zip file in Downloads")
+    subparsers.add_parser("backup", help="Backup all notes as a zip file")
 
     args = parser.parse_args()
 
@@ -131,6 +172,8 @@ def main():
         delete_note(args.title)
     elif args.command == "list":
         list_notes()
+    elif args.command == "status":
+        set_status(args.title, args.set)
     elif args.command == "export":
         export_note(args.title, args.pdf, args.html)
     elif args.command == "backup":

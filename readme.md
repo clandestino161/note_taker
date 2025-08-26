@@ -1,4 +1,4 @@
-# Note Taker CLI
+# CLI Notes
 
 A simple Neovim-based note-taking CLI application written in Python with Markdown support, note management, and export to PDF/HTML.
 
@@ -10,18 +10,28 @@ A simple Neovim-based note-taking CLI application written in Python with Markdow
 
 ## Installation
 
-The recommended way is to use **pipx** so you can run `note-taker` globally:
+The recommended way is to use **pipx** so you can run `notes` globally:
 
 ```bash
 pip install pipx
-pipx install git+https://github.com/clandestino161/note_taker.git
+pipx install git+https://github.com/clandestino161/notes.git
 ```
 
 To update the app after changes:
 
 ```bash
-pipx upgrade note_taker
+pipx upgrade notes
 ```
+
+## Features
+
+* create notes in markdown from the cli and open them directly in neovim
+* set a status (open, in progress, done) for each note (default is open)
+* modify notes directly in neovim
+* access all notes from anywhere
+* delete notes from anywhere
+* display all notes in a list with Title, Status, and Last Modified date
+* backup all notes (`.md` files) as a zip archive directly into the downloads directory
 
 ## Usage
 
@@ -32,7 +42,7 @@ All commands can be run from anywhere after installation.
 Creates a new note and immediately opens it in Neovim:
 
 ```bash
-note-taker add --title "Title of the Note"
+notes add --title "Title of the Note"
 ```
 
 ### Edit a note
@@ -40,7 +50,7 @@ note-taker add --title "Title of the Note"
 Open an existing note in Neovim:
 
 ```bash
-note-taker edit --title "Title of the Note"
+notes edit --title "Title of the Note"
 ```
 
 ### Delete a note
@@ -48,7 +58,7 @@ note-taker edit --title "Title of the Note"
 Delete an existing note:
 
 ```bash
-note-taker delete --title "Title of the Note"
+notes delete --title "Title of the Note"
 ```
 
 ### List all notes
@@ -56,7 +66,22 @@ note-taker delete --title "Title of the Note"
 Shows all saved notes without opening them:
 
 ```bash
-note-taker list
+notes list
+```
+
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Title       ┃ Status       ┃ Last Modified   ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ First Note  │ open         │ 2025-08-24 12:42│
+│ Second Note │ in progress  │ 2025-08-24 13:10│
+│ Done Note   │ done         │ 2025-08-24 14:05│
+└─────────────┴──────────────┴─────────────────┘
+
+### Change status of an existing note
+
+```bash
+notes status --title "Title of the Note" --set "in progress"
+notes status --title "Title of the Note" --set "done"
 ```
 
 ### Export notes
@@ -64,27 +89,27 @@ note-taker list
 Export as PDF:
 
 ```bash
-note-taker export --title "First Note" --pdf
+notes export --title "First Note" --pdf
 ```
 
 Export as HTML:
 
 ```bash
-note-taker export --title "First Note" --html
+notes export --title "First Note" --html
 ```
 
 Export as both PDF and HTML:
 
 ```bash
-note-taker export --title "First Note" --pdf --html
+notes export --title "First Note" --pdf --html
 ```
 
 ### Backup all notes
 
-Creates a zip archive in the users download directory including all files from note-taker:
+Creates a zip archive in the user’s Downloads directory including all `.md` notes:
 
 ```bash
-note-taker backup
+notes backup
 ```
 
 ## Notes Directory
@@ -92,10 +117,24 @@ note-taker backup
 All notes are stored in a standard location:
 
 ```bash
-~/.local/share/note_taker
+~/.local/share/notes
 ```
 
 The directory is created automatically on first run.
+
+## Uninstallation
+
+To completely uninstall note-taker:
+
+```bash
+pipx uninstall notes && rm -f /usr/local/bin/notes
+```
+
+If you also want to delete all your saved notes (⚠ irreversible):
+
+```bash
+rm -rf ~/.local/share/notes
+```
 
 ## License
 
