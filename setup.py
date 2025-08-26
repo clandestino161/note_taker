@@ -7,7 +7,7 @@ class PostInstallCommand(install):
     """Post-installation tasks."""
     def run(self):
         install.run(self)
-        notes_dir = os.path.join(os.path.expanduser("~"), ".local", "share", "note_taker")
+        notes_dir = os.path.join(os.path.expanduser("~"), ".local", "share", "notes")
         os.makedirs(notes_dir, exist_ok=True)
         print(f"[notes] Notes directory ready at: {notes_dir}")
 

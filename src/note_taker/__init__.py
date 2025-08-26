@@ -1,1 +1,1 @@
-"""note_taker package."""
+"""notes package."""
