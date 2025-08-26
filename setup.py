@@ -9,7 +9,7 @@ class PostInstallCommand(install):
         install.run(self)
         notes_dir = os.path.join(os.path.expanduser("~"), ".local", "share", "note_taker")
         os.makedirs(notes_dir, exist_ok=True)
-        print(f"[note-taker] Notes directory ready at: {notes_dir}")
+        print(f"[notes] Notes directory ready at: {notes_dir}")
 
 
 setup(
@@ -24,14 +24,14 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'note-taker=note_taker.main:main',
+            'notes=note_taker.main:main',
         ],
     },
     include_package_data=True,
     description="A simple Neovim-based note-taking CLI",
-    author="Your Name",
-    author_email="you@example.com",
-    url="https://github.com/yourusername/note_taker",
+    author="Lars Reime",
+    author_email="clandestino161@pm.me",
+    url="https://github.com/clandestino161/notes.git",
     cmdclass={
         'install': PostInstallCommand,
     },
