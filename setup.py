@@ -13,8 +13,8 @@ class PostInstallCommand(install):
 
 
 setup(
-    name='note_taker',
-    version='0.4',
+    name='notes',
+    version='0.9',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
