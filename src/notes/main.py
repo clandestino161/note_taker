@@ -19,6 +19,14 @@ def get_note_path(title: str) -> str:
     return os.path.join(NOTES_DIR, safe_title)
 
 
+def open_in_editor(note_path: str):
+    editor = os.environ.get("EDITOR", "nvim")
+    try:
+        subprocess.run([editor, note_path])
+    except FileNotFoundError:
+        console.print(f"[red]Error:[/red] Editor '{editor}' not found. Please set $EDITOR.")
+
+
 def add_note(title: str):
     note_path = get_note_path(title)
     if os.path.exists(note_path):
@@ -27,7 +35,7 @@ def add_note(title: str):
     with open(note_path, "w") as f:
         f.write("<!-- status: open -->\n")
         f.write(f"# {title}\n\n")
-    subprocess.run(["nvim", note_path])
+    open_in_editor(note_path)
 
 
 def edit_note(title: str):
@@ -35,7 +43,7 @@ def edit_note(title: str):
     if not os.path.exists(note_path):
         console.print(f"[red]Error:[/red] Note '{title}' not found.")
         return
-    subprocess.run(["nvim", note_path])
+    open_in_editor(note_path)
 
 
 def delete_note(title: str):
@@ -120,6 +128,17 @@ def export_note(title: str, to_pdf: bool, to_html: bool):
         console.print(f"[green]Exported to PDF:[/green] {pdf_file}")
 
 
+def export_all(to_pdf: bool, to_html: bool):
+    files = [f for f in os.listdir(NOTES_DIR) if f.endswith(".md")]
+    if not files:
+        console.print("[yellow]No notes to export.[/yellow]")
+        return
+
+    for f in files:
+        title = f.replace("_", " ").removesuffix(".md")
+        export_note(title, to_pdf, to_html)
+
+
 def backup_notes():
     downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
     os.makedirs(downloads_dir, exist_ok=True)
@@ -128,12 +147,14 @@ def backup_notes():
         f"notes_backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
     )
 
+    count = 0
     with zipfile.ZipFile(backup_file, "w") as zipf:
         for f in os.listdir(NOTES_DIR):
             if f.endswith(".md"):
                 zipf.write(os.path.join(NOTES_DIR, f), arcname=f)
+                count += 1
 
-    console.print(f"[green]Backup created:[/green] {backup_file}")
+    console.print(f"[green]Backup created:[/green] {backup_file} ({count} notes)")
 
 
 def main():
@@ -156,9 +177,10 @@ def main():
     status_parser.add_argument("--set", required=True, choices=["open", "in progress", "done"], help="New status")
 
     export_parser = subparsers.add_parser("export", help="Export a note")
-    export_parser.add_argument("--title", required=True, help="Title of the note")
+    export_parser.add_argument("--title", help="Title of the note (omit for --all)")
     export_parser.add_argument("--pdf", action="store_true", help="Export as PDF")
     export_parser.add_argument("--html", action="store_true", help="Export as HTML")
+    export_parser.add_argument("--all", action="store_true", help="Export all notes")
 
     subparsers.add_parser("backup", help="Backup all notes as a zip file")
 
@@ -175,7 +197,12 @@ def main():
     elif args.command == "status":
         set_status(args.title, args.set)
     elif args.command == "export":
-        export_note(args.title, args.pdf, args.html)
+        if args.all:
+            export_all(args.pdf, args.html)
+        elif args.title:
+            export_note(args.title, args.pdf, args.html)
+        else:
+            console.print("[red]Error:[/red] Please provide --title or --all.")
     elif args.command == "backup":
         backup_notes()
 

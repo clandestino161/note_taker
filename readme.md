@@ -100,8 +100,16 @@ notes export --title "First Note" --html
 
 Export as both PDF and HTML:
 
+Export a single note
+
 ```bash
 notes export --title "First Note" --pdf --html
+```
+
+Export all notes
+
+```bash
+notes export --all --pdf --html
 ```
 
 ### Backup all notes

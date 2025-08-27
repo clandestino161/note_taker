@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'notes=note_taker.main:main',
+            'notes=notes.main:main',
         ],
     },
     include_package_data=True,
