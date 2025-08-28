@@ -132,7 +132,7 @@ The directory is created automatically on first run.
 
 ## Uninstallation
 
-To completely uninstall note-taker:
+To completely uninstall notes:
 
 ```bash
 pipx uninstall notes && rm -f /usr/local/bin/notes
