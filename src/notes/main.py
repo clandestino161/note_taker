@@ -11,13 +11,13 @@ import datetime
 console = Console()
 
 NOTES_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "notes")
+DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
 os.makedirs(NOTES_DIR, exist_ok=True)
-
+os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 def get_note_path(title: str) -> str:
     safe_title = f"{title}.md".replace(" ", "_")
     return os.path.join(NOTES_DIR, safe_title)
-
 
 def open_in_editor(note_path: str):
     editor = os.environ.get("EDITOR", "nvim")
@@ -25,7 +25,6 @@ def open_in_editor(note_path: str):
         subprocess.run([editor, note_path])
     except FileNotFoundError:
         console.print(f"[red]Error:[/red] Editor '{editor}' not found. Please set $EDITOR.")
-
 
 def add_note(title: str):
     note_path = get_note_path(title)
@@ -37,14 +36,12 @@ def add_note(title: str):
         f.write(f"# {title}\n\n")
     open_in_editor(note_path)
 
-
 def edit_note(title: str):
     note_path = get_note_path(title)
     if not os.path.exists(note_path):
         console.print(f"[red]Error:[/red] Note '{title}' not found.")
         return
     open_in_editor(note_path)
-
 
 def delete_note(title: str):
     note_path = get_note_path(title)
@@ -54,13 +51,11 @@ def delete_note(title: str):
     os.remove(note_path)
     console.print(f"[green]Deleted:[/green] {title}")
 
-
 def extract_status(content: str) -> str:
     for line in content.splitlines():
         if line.startswith("<!-- status:"):
             return line.replace("<!-- status:", "").replace("-->", "").strip()
     return "open"
-
 
 def list_notes():
     files = sorted(f for f in os.listdir(NOTES_DIR) if f.endswith(".md"))
@@ -84,7 +79,6 @@ def list_notes():
 
     console.print(table)
 
-
 def set_status(title: str, status: str):
     note_path = get_note_path(title)
     if not os.path.exists(note_path):
@@ -104,7 +98,6 @@ def set_status(title: str, status: str):
 
     console.print(f"[green]Updated status:[/green] {title} → {status}")
 
-
 def export_note(title: str, to_pdf: bool, to_html: bool):
     note_path = get_note_path(title)
     if not os.path.exists(note_path):
@@ -117,16 +110,15 @@ def export_note(title: str, to_pdf: bool, to_html: bool):
     html_content = markdown2.markdown(content)
 
     if to_html:
-        html_file = note_path.replace(".md", ".html")
+        html_file = os.path.join(DOWNLOADS_DIR, f"{title.replace(' ', '_')}.html")
         with open(html_file, "w") as f:
             f.write(html_content)
         console.print(f"[green]Exported to HTML:[/green] {html_file}")
 
     if to_pdf:
-        pdf_file = note_path.replace(".md", ".pdf")
+        pdf_file = os.path.join(DOWNLOADS_DIR, f"{title.replace(' ', '_')}.pdf")
         HTML(string=html_content).write_pdf(pdf_file)
         console.print(f"[green]Exported to PDF:[/green] {pdf_file}")
-
 
 def export_all(to_pdf: bool, to_html: bool):
     files = [f for f in os.listdir(NOTES_DIR) if f.endswith(".md")]
@@ -138,12 +130,9 @@ def export_all(to_pdf: bool, to_html: bool):
         title = f.replace("_", " ").removesuffix(".md")
         export_note(title, to_pdf, to_html)
 
-
 def backup_notes():
-    downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-    os.makedirs(downloads_dir, exist_ok=True)
     backup_file = os.path.join(
-        downloads_dir,
+        DOWNLOADS_DIR,
         f"notes_backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
     )
 
@@ -155,7 +144,6 @@ def backup_notes():
                 count += 1
 
     console.print(f"[green]Backup created:[/green] {backup_file} ({count} notes)")
-
 
 def main():
     parser = argparse.ArgumentParser(prog="notes", description="Simple Neovim-based Notes CLI")
@@ -176,7 +164,7 @@ def main():
     status_parser.add_argument("--title", required=True, help="Title of the note")
     status_parser.add_argument("--set", required=True, choices=["open", "in progress", "done"], help="New status")
 
-    export_parser = subparsers.add_parser("export", help="Export a note")
+    export_parser = subparsers.add_parser("export", help="Export notes")
     export_parser.add_argument("--title", help="Title of the note (omit for --all)")
     export_parser.add_argument("--pdf", action="store_true", help="Export as PDF")
     export_parser.add_argument("--html", action="store_true", help="Export as HTML")
@@ -205,7 +193,6 @@ def main():
             console.print("[red]Error:[/red] Please provide --title or --all.")
     elif args.command == "backup":
         backup_notes()
-
 
 if __name__ == "__main__":
     main()
